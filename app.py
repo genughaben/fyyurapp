@@ -2,10 +2,11 @@
 # Imports
 #----------------------------------------------------------------------------#
 
+import sys
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -34,19 +35,34 @@ class Venue(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
+    address = db.Column(db.String(120), nullable=False)
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
-    address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=True)
-    webpage_link = db.Column(db.String(500), nullable=False)
-    image_link = db.Column(db.String(500), nullable=False)
+    website = db.Column(db.String(500), nullable=False)
     facebook_link = db.Column(db.String(120), nullable=True)
-    genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
-    seek_talent = db.Column(db.Boolean, nullable=False, default=False)
-    seek_talent_text = db.Column(db.Text, nullable=False, default='')
+    seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
+    seeking_description = db.Column(db.Text, nullable=False, default='')
+    image_link = db.Column(db.String(500), nullable=True)
     shows = db.relationship('Show', backref='venue', lazy=True)
 
-
+    def __str__(self):
+      _str = ""
+      _str += f"name: {self.name}\n"
+      _str += f"genres: {self.genres}\n"
+      _str += f"address: {self.address}\n"
+      _str += f"city: {self.city}\n"
+      _str += f"state: {self.state}\n"
+      _str += f"phone: {self.phone}\n"
+      _str += f"website: {self.website}\n"
+      _str += f"facebook_link: {self.facebook_link}\n"
+      _str += f"seeking_talent: {self.seeking_talent}\n"
+      _str += f"seeking_description: {self.seeking_description}\n"
+      _str += f"image_link: {self.image_link}\n"
+      _str += f"shows: {self.shows}\n"
+      return _str
+      
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -131,7 +147,12 @@ def venues():
       "num_upcoming_shows": 0,
     }]
   }]
-  return render_template('pages/venues.html', areas=data);
+  dg = Venue.query.order_by(Venue.city.asc()).order_by(Venue.state.asc()).all()
+  for d in dg:
+    print(d)
+  # data = Venue.query.all()
+  print(data[0])
+  return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -242,15 +263,55 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
+
+    error = False
+    try:
+        form_data = request.form
+        name = form_data['name']
+        city = form_data['city']
+        state = form_data['state']
+        address =form_data['address']
+        phone = form_data['phone']
+        genres = form_data.getlist('genres')
+        website = form_data['website_link']
+        facebook_link = form_data['facebook_link']
+        new_venue = Venue(
+          name = name,
+          city = city,
+          state = state,
+          address = address,
+          phone = phone,
+          genres = genres,
+          website = website,
+          facebook_link = facebook_link
+        )
+        db.session.add(new_venue)
+        db.session.commit()
+    except:
+        error = True
+        db.session.rollback()
+        print(sys.exc_info())
+    finally:
+        db.session.close()
+
+    if error:
+        flash('An error occurred. Venue ' + new_venue.name + ' could not be listed.', 'error')
+        abort(400)
+    flash('Venue ' + new_venue.name + ' was successfully listed!', 'success')
+    return render_template('pages/home.html')
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
 
   # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
+
+### flash('Venue ' + request.form['name'] + ' was successfully listed!')
+
+
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+
+### return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
