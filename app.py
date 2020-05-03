@@ -46,8 +46,6 @@ app.jinja_env.filters['datetime'] = format_datetime
 # Controllers.
 #----------------------------------------------------------------------------#
 
-from controllers.venue_controller import *
-
 #  Artists
 #  ----------------------------------------------------------------
 @app.route('/artists')
