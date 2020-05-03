@@ -1,13 +1,24 @@
 
 from flask import render_template, request, Response, flash, redirect, url_for, abort, jsonify
 from models import db, Venue, Artist, Show
+from sqlalchemy.inspection import inspect
 from forms import VenueForm
 from flask import Blueprint
+import pandas as pd
 
 venue_api = Blueprint('venue_api', __name__)
 
 #  Venues
 #  ----------------------------------------------------------------
+from collections import defaultdict
+
+def query_to_dict(rset):
+    result = defaultdict(list)
+    for obj in rset:
+        instance = inspect(obj)
+        for key, x in instance.attrs.items():
+            result[key].append(x.value)
+    return result
 
 @venue_api.route('/')
 def venues():
@@ -34,11 +45,32 @@ def venues():
         "num_upcoming_shows": 0,
         }]
     }]
-    dg = Venue.query.order_by(Venue.city.asc()).order_by(Venue.state.asc()).all()
-    for d in dg:
-        print(d)
-    # data = Venue.query.all()
-    print(data[0])
+
+    venues_list = Venue.query.order_by(Venue.city.asc()).order_by(Venue.state.asc()).all()
+
+    data = []
+    entry = { 
+      'city': venues_list[0].city,
+      'state': venues_list[0].state,
+      'venues': []
+    }
+    for venue in venues_list:
+      venue_entry = {
+        'id': venue.id,
+        'name': venue.name, 
+        'num_upcoming_shows': venue.get_num_upcoming_shows()
+      }
+      if venue.city == entry['city'] and venue.state == entry['state']:
+        entry['venues'].append(venue_entry)
+      else:
+        data.append(entry)
+        entry = { 
+          'city': venue.city,
+          'state': venue.state,
+          'venues': [venue]
+        }
+    data.append(entry)
+
     return render_template('pages/venues.html', areas=data)
 
 @venue_api.route('/search', methods=['POST'])
@@ -60,6 +92,7 @@ def search_venues():
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
+
   data1={
     "id": 1,
     "name": "The Musical Hop",
@@ -137,7 +170,9 @@ def show_venue(venue_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
   }
-  data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
+  data = Venue.query.filter_by(id=venue_id).first()
+  print(data)
+  # data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue

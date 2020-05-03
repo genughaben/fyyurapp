@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from datetime import datetime
+from datetime import datetime, date
 
 db = SQLAlchemy()
 
@@ -46,6 +46,12 @@ class Venue(db.Model):
       _str += f"image_link: {self.image_link}\n"
       _str += f"shows: {self.shows}\n"
       return _str
+
+
+    def get_num_upcoming_shows(self):
+        t = Venue.query.filter_by(id=Venue.id).filter(Show.date < date.today()).count()
+        # print(f"shows count: {t}")
+        return t
       
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
