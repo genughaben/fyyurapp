@@ -13,3 +13,18 @@ services:
         POSTGRES_PASSWORD: 'docker'
     volumes:
        - ./db:/var/lib/postgresql/data
+       # - ./init.sql:/docker-entrypoint-initdb.d/2-data.sql
+
+   fyyurapp:
+     container_name: fyyurapp
+     depends_on:
+       - fyyurdb
+     build:
+      context: .
+      dockerfile: Dockerfile
+     ports:
+       - "7001:7001"
+     links:
+       - fyyurdb
+     command:
+       - init.sh

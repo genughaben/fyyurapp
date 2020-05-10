@@ -14,5 +14,5 @@ SQLALCHEMY_DATABASE_URI = 'postgres://postgres:docker@localhost:5432/fyyur'
 # check if app started inside docker, thus using docker postgres from inside as outlined in docker-compose.yml
 docker = False
 if 'DOCKER' in os.environ:
-    if os.environ['Docker'] == 'True':
+    if os.environ['DOCKER'] == 'True':
         SQLALCHEMY_DATABASE_URI = 'postgres://postgres:docker@fyyurdb:5432/fyyur'
