@@ -13,8 +13,6 @@ step-deploy-master:
     - master
   script:
     - ls
-    - cd code
-    - ls
     - chmod u+x deploy.sh
     - ./deploy.sh
   environment: production
