@@ -13,6 +13,9 @@ before_script:
   - pip install --upgrade pip
   - pip install docker-compose
 
+after_script:
+  - flask run migrate
+
 step-deploy-master:
   stage: deploy
   before_script:
@@ -20,6 +23,8 @@ step-deploy-master:
   only:
     - master
   script:
+    - ls
+    - sudo rm -rf db
     - ls
     - chmod u+x deploy.sh
     - ./deploy.sh
