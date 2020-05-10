@@ -5,6 +5,7 @@ from sqlalchemy.inspection import inspect
 from forms import VenueForm
 from flask import Blueprint
 import pandas as pd
+import sys
 
 venue_api = Blueprint('venue_api', __name__)
 
@@ -49,7 +50,7 @@ def venues():
     venues_list = Venue.query.order_by(Venue.city.asc()).order_by(Venue.state.asc()).all()
 
     data = []
-    entry = { 
+    entry = {
       'city': venues_list[0].city,
       'state': venues_list[0].state,
       'venues': []
@@ -57,14 +58,14 @@ def venues():
     for venue in venues_list:
       venue_entry = {
         'id': venue.id,
-        'name': venue.name, 
+        'name': venue.name,
         'num_upcoming_shows': venue.get_num_upcoming_shows()
       }
       if venue.city == entry['city'] and venue.state == entry['state']:
         entry['venues'].append(venue_entry)
       else:
         data.append(entry)
-        entry = { 
+        entry = {
           'city': venue.city,
           'state': venue.state,
           'venues': [venue]
