@@ -13,11 +13,11 @@ step-deploy-master:
     - master
   script:
     - echo setting up env $DYNAMIC_ENV_VAR
-    - sudo apt-get update && sudo apt-get install bash
-    - sudo apt-get install -y python-pip
-    - sudo pip install docker-compose
-    - sudo docker image prune -f
-    - sudo docker-compose -f docker-compose.yml build --no-cache
-    - sudo docker-compose -f docker-compose.yml up -d
+    - apt-get update && sudo apt-get install bash
+    - apt-get install -y python-pip
+    - pip install docker-compose
+    - docker image prune -f
+    - docker-compose -f docker-compose.yml build --no-cache
+    - docker-compose -f docker-compose.yml up -d
   environment: production
   when: manual
