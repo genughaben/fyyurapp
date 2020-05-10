@@ -12,4 +12,4 @@ services:
         POSTGRES_USER: 'postgres'
         POSTGRES_PASSWORD: 'docker'
     volumes:
-       - ./db:/var/lib/postgresql/dat
+       - ./db:/var/lib/postgresql/data
