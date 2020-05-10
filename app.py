@@ -15,6 +15,7 @@ from forms import *
 from models import setup_database, Venue, Artist, Show
 from controllers.venue_controller import venue_api
 from flask_basicauth import BasicAuth
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
