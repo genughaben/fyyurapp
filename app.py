@@ -14,11 +14,17 @@ from flask_wtf import Form
 from forms import *
 from models import setup_database, Venue, Artist, Show
 from controllers.venue_controller import venue_api
+from flask_basicauth import BasicAuth
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
 
 app = Flask(__name__)
+
+app.config['BASIC_AUTH_USERNAME'] = 'admin'
+app.config['BASIC_AUTH_PASSWORD'] = 'udacity'
+app.config['BASIC_AUTH_FORCE'] = True
+
 moment = Moment(app)
 db = setup_database(app)
 
