@@ -5,6 +5,7 @@ services:
     build:
      context: nginx
      dockerfile: Dockerfile
+    restart: always
     ports:
       - "80:80"
     command: nginx -g "daemon off";
@@ -26,6 +27,7 @@ services:
 
    fyyurapp:
      container_name: fyyurapp
+     restart: always
      depends_on:
        - fyyurdb
      build:
@@ -33,5 +35,5 @@ services:
       dockerfile: Dockerfile
      ports:
        - "7001:7001"
-     links:
-       - fyyurdb
+     environment:
+        DOCKER: 'True'
