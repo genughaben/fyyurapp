@@ -29,4 +29,3 @@ step-deploy-master:
     - chmod u+x deploy.sh
     - ./deploy.sh
   environment: production
-  when: manual
