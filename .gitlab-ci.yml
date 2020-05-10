@@ -5,6 +5,14 @@ services:
 stages:
   - deploy
 
+before_script:
+  - apk update && apk add sudo
+  - apk add --update py-pip
+  - pip install -U setuptools
+  - apk add python-dev libffi-dev openssl-dev gcc libc-dev make
+  - pip install --upgrade pip
+  - pip install docker-compose
+
 step-deploy-master:
   stage: deploy
   before_script:
