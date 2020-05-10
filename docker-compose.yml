@@ -1,6 +1,16 @@
 version: '3'
 
 services:
+   nginx:
+    build:
+     context: nginx
+     dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    command: nginx -g "daemon off";
+    depends_on:
+     - fyyurapp
+
    fyyurdb:
     container_name: fyyurdb
     image: postgres:10.10-alpine
@@ -13,7 +23,6 @@ services:
         POSTGRES_PASSWORD: 'docker'
     volumes:
        - ./db:/var/lib/postgresql/data
-       # - ./init.sql:/docker-entrypoint-initdb.d/2-data.sql
 
    fyyurapp:
      container_name: fyyurapp
@@ -26,5 +35,3 @@ services:
        - "7001:7001"
      links:
        - fyyurdb
-     command:
-       - init.sh
