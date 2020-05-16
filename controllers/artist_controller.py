@@ -80,18 +80,13 @@ def show_artist(artist_id):
     "facebook_link": artist.facebook_link,
     "image_link": artist.image_link,
     "website": artist.website,
+    "seek_performance": artist.seek_performance,
+    "seek_performance_text": artist.seek_performance_text,
     "past_shows": past_show_list,
     "upcoming_shows": upcoming_show_list,
     "past_shows_count": len(past_show_list),
     "upcoming_shows_count": len(upcoming_show_list)
    }
-
-  # genres = []
-  # if len(artist.genres[0]) > 1:
-  #     for genre in artist.genres:
-  #         genres.append(genre)
-  # else:
-  #     genres = [artist.genres]
 
   return render_template('pages/show_artist.html', artist=data)
 
@@ -162,6 +157,7 @@ def create_artist_submission():
         state = form_data['state']
         phone = form_data['phone']
         image_link = form_data['image_link']
+        seek_performance_text = form_data['seek_performance_text']
         facebook_link = url_valid_or_error(form_data['facebook_link'])
         website = url_valid_or_error(form_data['website'])
         genres = form_data.getlist('genres')
@@ -175,9 +171,10 @@ def create_artist_submission():
             facebook_link = facebook_link,
             website = website,
             genres = genres,
-            seek_performance = False,
-            seek_performance_text = '',
+            seek_performance = True if seek_performance_text != '' else False,
+            seek_performance_text = seek_performance_text,
         )
+        print(new_artist)
         db.session.add(new_artist)
         db.session.commit()
     except Exception as e:

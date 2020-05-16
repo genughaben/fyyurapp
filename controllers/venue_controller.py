@@ -8,7 +8,7 @@ import pandas as pd
 import sys
 
 from pprint import pprint
-from controllers.util import url_valid_or_error
+from controllers.util import InvalidUrlException, url_valid_or_error
 
 venue_api = Blueprint('venue_api', __name__)
 
@@ -157,10 +157,11 @@ def create_venue_submission():
         state = form_data['state']
         address = form_data['address']
         phone = form_data['phone']
-        image_link = form_data['image_link']
+        image_link = url_valid_or_error(form_data['image_link'])
         genres = form_data.getlist('genres')
         website = url_valid_or_error(form_data['website'])
         facebook_link = url_valid_or_error(form_data['facebook_link'])
+        seeking_description = form_data['seeking_description']
         new_venue = Venue(
           name = name,
           city = city,
@@ -169,7 +170,10 @@ def create_venue_submission():
           phone = phone,
           genres = genres,
           website = website,
-          facebook_link = facebook_link
+          facebook_link = facebook_link,
+          image_link = image_link,
+          seeking_talent = True if seeking_description != '' else False,
+          seeking_description = seeking_description
         )
         db.session.add(new_venue)
         db.session.commit()
