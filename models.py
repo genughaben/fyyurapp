@@ -1,14 +1,32 @@
+from flask import Flask
+from flask_moment import Moment
+from flask_basicauth import BasicAuth
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, date
 
-db = SQLAlchemy()
+#----------------------------------------------------------------------------#
+# App Config.
+#----------------------------------------------------------------------------#
 
-def setup_database(app):
-    app.config.from_object('config')
-    db.init_app(app)
-    migrate = Migrate(app, db)
-    return db
+app = Flask(__name__)
+
+app.config['BASIC_AUTH_USERNAME'] = 'admin'
+app.config['BASIC_AUTH_PASSWORD'] = 'udacity'
+app.config['BASIC_AUTH_FORCE'] = True
+app.config.from_object('config')
+
+basic_auth = BasicAuth(app)
+moment = Moment(app)
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# def setup_database(app):
+#     app.config.from_object('config')
+#     db.init_app(app)
+#     migrate = Migrate(app, db)
+#     return db
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -52,9 +70,7 @@ class Venue(db.Model):
         t = Venue.query.filter_by(id=Venue.id).filter(Show.date < date.today()).count()
         # print(f"shows count: {t}")
         return t
-      
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -64,15 +80,18 @@ class Artist(db.Model):
     city = db.Column(db.String(120), nullable=False)
     state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120), nullable=True)
-    genres = db.Column(db.String(120), nullable=False)
-    webpage_link = db.Column(db.String(500), nullable=False)
+    genres = db.Column(db.ARRAY(db.String(120)), nullable=False)
+    website = db.Column(db.String(500), nullable=False)
     image_link = db.Column(db.String(500), nullable=False)
     facebook_link = db.Column(db.String(120), nullable=True)
     seek_performance = db.Column(db.Boolean, nullable=False, default=False)
     seek_performance_text = db.Column(db.Text, nullable=False, default='')
     shows = db.relationship('Show', backref='artist', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    def get_num_upcoming_shows(self):
+        t = Artist.query.filter_by(id=Artist.id).filter(Show.date < date.today()).count()
+        # print(f"shows count: {t}")
+        return t
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
@@ -80,7 +99,6 @@ class Show(db.Model):
     __tablename__ = 'Show'
 
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime, nullable=False,
-        default=datetime.utcnow)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)

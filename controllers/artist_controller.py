@@ -16,110 +16,62 @@ artist_api = Blueprint('artist_api', __name__)
 #  ----------------------------------------------------------------
 @artist_api.route('/')
 def artists():
-  # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
+  artist_list = Artist.query.order_by(Artist.name.asc()).all()
+  data = []
+  print(artist_list)
+  for artist in artist_list:
+      arist_dict = {}
+      arist_dict['id'] = artist.id
+      arist_dict['name'] = artist.name
+      data.append(arist_dict)
+
   return render_template('pages/artists.html', artists=data)
 
 @artist_api.route('/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
-  }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+
+    response = {}
+    error = False
+    try:
+        form_data = request.form
+        search_term = form_data['search_term']
+        search_term = f"%{search_term}%"
+
+        artist_suggestions = Artist.query.filter(Artist.name.ilike(search_term)).all()
+
+        response = {
+          "count": len(artist_suggestions),
+          "data" : []
+        }
+
+        artist_dict = {}
+        for artist in artist_suggestions:
+            artist_dict["id"] = artist.id
+            artist_dict["name"] = artist.name
+            artist_dict["num_upcoming_shows"] = artist.get_num_upcoming_shows()
+            response["data"].append(artist_dict)
+
+    except Exception as e:
+        print(f"An error {e} occured.")
+    finally:
+        db.session.close()
+
+    return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @artist_api.route('/<int:artist_id>')
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
-  data1={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    "past_shows": [{
-      "venue_id": 1,
-      "venue_name": "The Musical Hop",
-      "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-      "start_time": "2019-05-21T21:30:00.000Z"
-    }],
-    "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 0,
-  }
-  data2={
-    "id": 5,
-    "name": "Matt Quevedo",
-    "genres": ["Jazz"],
-    "city": "New York",
-    "state": "NY",
-    "phone": "300-400-5000",
-    "facebook_link": "https://www.facebook.com/mattquevedo923251523",
-    "seeking_venue": False,
-    "image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-    "past_shows": [{
-      "venue_id": 3,
-      "venue_name": "Park Square Live Music & Coffee",
-      "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2019-06-15T23:00:00.000Z"
-    }],
-    "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 0,
-  }
-  data3={
-    "id": 6,
-    "name": "The Wild Sax Band",
-    "genres": ["Jazz", "Classical"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "432-325-5432",
-    "seeking_venue": False,
-    "image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-    "past_shows": [],
-    "upcoming_shows": [{
-      "venue_id": 3,
-      "venue_name": "Park Square Live Music & Coffee",
-      "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2035-04-01T20:00:00.000Z"
-    }, {
-      "venue_id": 3,
-      "venue_name": "Park Square Live Music & Coffee",
-      "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2035-04-08T20:00:00.000Z"
-    }, {
-      "venue_id": 3,
-      "venue_name": "Park Square Live Music & Coffee",
-      "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-      "start_time": "2035-04-15T20:00:00.000Z"
-    }],
-    "past_shows_count": 0,
-    "upcoming_shows_count": 3,
-  }
-  data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
+
+  data = Artist.query.filter_by(id=artist_id).first()
+  genres = []
+  if len(data.genres[0]) > 1:
+      for genre in data.genres:
+          genres.append(genre)
+  else:
+      genres = [data.genres]
+
   return render_template('pages/show_artist.html', artist=data)
 
 #  Update
@@ -170,8 +122,6 @@ def edit_venue(venue_id):
   # TODO: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
-
-
   #  Create Artist
   #  ----------------------------------------------------------------
 
@@ -182,6 +132,46 @@ def create_artist_form():
 
 @artist_api.route('/create', methods=['POST'])
 def create_artist_submission():
+
+    error = False
+    try:
+        form_data = request.form
+        name = form_data['name']
+        city = form_data['city']
+        state = form_data['state']
+        phone = form_data['phone']
+        image_link = form_data['image_link']
+        facebook_link = url_valid_or_error(form_data['facebook_link'])
+        website = url_valid_or_error(form_data['website'])
+        genres = form_data.getlist('genres')
+
+        new_artist = Artist(
+            name = name,
+            city = city,
+            state = state,
+            phone = phone,
+            image_link = image_link,
+            facebook_link = facebook_link,
+            website = website,
+            genres = genres,
+            seek_performance = False,
+            seek_performance_text = '',
+        )
+        db.session.add(new_artist)
+        db.session.commit()
+    except Exception as e:
+        flash('Invalid Artist ' + form_data['name'] + ' could not be listed.', 'error')
+        print(sys.exc_info())
+    finally:
+        db.session.close()
+
+    if error:
+        flash('An error occurred. Artist ' + form_data['name'] + ' could not be listed.', 'error')
+        abort(400)
+    flash('Artist ' + form_data['name'] + ' was successfully listed!', 'success')
+    return render_template('pages/home.html')
+
+
     # called upon submitting the new artist listing form
     # TODO: insert form data as a new Venue record in the db, instead
     # TODO: modify data to be the data object returned from db insertion

@@ -7,31 +7,16 @@ import json
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort, jsonify
-from flask_moment import Moment
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
-from models import setup_database, Venue, Artist, Show
+from models import app, Artist, Venue, Show
 from controllers.venue_controller import venue_api
 from controllers.artist_controller import artist_api
 from controllers.show_controller import show_api
 from flask_basicauth import BasicAuth
 
-#----------------------------------------------------------------------------#
-# App Config.
-#----------------------------------------------------------------------------#
-
-app = Flask(__name__)
-
-app.config['BASIC_AUTH_USERNAME'] = 'admin'
-app.config['BASIC_AUTH_PASSWORD'] = 'udacity'
-
-basic_auth = BasicAuth(app)
-app.config['BASIC_AUTH_FORCE'] = True
-
-moment = Moment(app)
-db = setup_database(app)
 
 #----------------------------------------------------------------------------#
 # Controllers.
