@@ -7,6 +7,7 @@ from flask import Blueprint
 import pandas as pd
 import sys
 
+from pprint import pprint
 from controllers.util import url_valid_or_error
 
 venue_api = Blueprint('venue_api', __name__)
@@ -52,17 +53,14 @@ def venues():
 
     return render_template('pages/venues.html', areas=data)
 
-from pprint import pprint
-
 @venue_api.route('/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    # seach for Hop should return "The Musical Hop".
+    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
 
-  response = {}
-  error = False
-  try:
+    response = {}
+    error = False
+    try:
       form_data = request.form
       search_term = form_data['search_term'].lower()
       search_term = f"%{search_term}%"
@@ -81,18 +79,41 @@ def search_venues():
           venue_dict["num_upcoming_shows"] = venue.get_num_upcoming_shows()
           response["data"].append(venue_dict)
 
-  except Exception as e:
+    except Exception as e:
       print(f"An error {e} occured.")
-  finally:
+    finally:
       db.session.close()
 
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+    return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @venue_api.route('/<int:venue_id>')
 def show_venue(venue_id):
-  # shows the venue page with the given venue_id
-  data = Venue.query.filter_by(id=venue_id).first()
-  return render_template('pages/show_venue.html', venue=data)
+    # shows the venue page with the given venue_id
+    venue = Venue.query.filter_by(id=venue_id).first()
+
+    upcoming_show_list = Show.get_venues_upcoming_shows(venue_id=venue.id)
+    past_show_list = Show.get_venues_past_shows(venue_id=venue.id)
+
+    data = {
+      "id": venue.id,
+      "name": venue.name,
+      "genres": venue.genres,
+      "address": venue.address,
+      "city": venue.city,
+      "state": venue.state,
+      "phone": venue.phone,
+      "website": venue.website,
+      "facebook_link": venue.facebook_link,
+      "seeking_talent": venue.seeking_talent,
+      "seeking_description": venue.seeking_description,
+      "image_link": venue.image_link,
+      "past_shows": past_show_list,
+      "upcoming_shows": upcoming_show_list,
+      "past_shows_count": len(past_show_list),
+      "upcoming_shows_count": len(upcoming_show_list)
+    }
+
+    return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
 #  ----------------------------------------------------------------

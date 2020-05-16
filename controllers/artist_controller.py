@@ -86,12 +86,12 @@ def show_artist(artist_id):
     "upcoming_shows_count": len(upcoming_show_list)
    }
 
-  genres = []
-  if len(artist.genres[0]) > 1:
-      for genre in artist.genres:
-          genres.append(genre)
-  else:
-      genres = [artist.genres]
+  # genres = []
+  # if len(artist.genres[0]) > 1:
+  #     for genre in artist.genres:
+  #         genres.append(genre)
+  # else:
+  #     genres = [artist.genres]
 
   return render_template('pages/show_artist.html', artist=data)
 
