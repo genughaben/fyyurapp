@@ -1,6 +1,6 @@
 
 from flask import render_template, request, Response, flash, redirect, url_for, abort, jsonify
-from models import db, Venue, Artist, Show
+from models import db, Venue, Artist, Show, format_datetime
 from sqlalchemy.inspection import inspect
 from forms import VenueForm
 from flask import Blueprint
@@ -37,7 +37,7 @@ def venues():
       venue_entry = {
         'id': venue.id,
         'name': venue.name,
-        'num_upcoming_shows': venue.get_num_upcoming_shows()
+        'num_upcoming_shows': len(Show.get_venues_upcoming_shows(venue_id=venue.id))
       }
       if venue.city == entry['city'] and venue.state == entry['state']:
         entry['venues'].append(venue_entry)

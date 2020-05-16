@@ -1,6 +1,7 @@
 
+from datetime import datetime
 from flask import render_template, request, Response, flash, redirect, url_for, abort, jsonify
-from models import db, Venue, Artist, Show
+from models import db, Venue, Artist, Show, format_datetime
 from sqlalchemy.inspection import inspect
 from forms import ArtistForm
 from flask import Blueprint
@@ -50,7 +51,7 @@ def search_artists():
         for artist in artist_suggestions:
             artist_dict["id"] = artist.id
             artist_dict["name"] = artist.name
-            artist_dict["num_upcoming_shows"] = artist.get_num_upcoming_shows()
+            artist_dict["num_upcoming_shows"] = len(artist.shows.filter_by(Show.start_time > datetime.now()))
             response["data"].append(artist_dict)
 
     except Exception as e:
@@ -64,13 +65,54 @@ def search_artists():
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
 
-  data = Artist.query.filter_by(id=artist_id).first()
+  artist = Artist.query.filter_by(id=artist_id).first()
+
+  upcoming_shows = Show.get_artists_upcoming_shows(artist_id=artist.id)
+  past_shows = Show.get_artists_past_shows(artist_id=artist.id)
+
+  print(f"upcoming_shows: {upcoming_shows}")
+  print(f"past_shows: {past_shows}")
+
+  upcoming_show_list = []
+  for upcoming_show in upcoming_shows:
+      upcoming_show_dict = {}
+      upcoming_show_dict['venue_image_link'] = upcoming_show.venue.image_link
+      upcoming_show_dict['venue_id'] = upcoming_show.venue.id
+      upcoming_show_dict['venue_name'] = upcoming_show.venue.name
+      upcoming_show_dict['start_time'] = upcoming_show.start_time.strftime('%Y-%m-%d %H:%M:%S')
+      upcoming_show_list.append(upcoming_show_dict)
+
+  past_show_list = []
+  for past_show in past_shows:
+      past_show_dict = {}
+      past_show_dict['venue_image_link'] = past_show.venue.image_link
+      past_show_dict['venue_id'] = past_show.venue.id
+      past_show_dict['venue_name'] = past_show.venue.name
+      past_show_dict['start_time'] = past_show.start_time.strftime('%Y-%m-%d %H:%M:%S')
+      past_show_list.append(past_show_dict)
+
+  data = {
+    "id": artist.id,
+    "name": artist.name,
+    "genres": artist.genres,
+    "city": artist.city,
+    "state": artist.state,
+    "phone": artist.phone,
+    "facebook_link": artist.facebook_link,
+    "image_link": artist.image_link,
+    "website": artist.website,
+    "past_shows": past_show_list,
+    "upcoming_shows": upcoming_show_list,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_show_list)
+   }
+
   genres = []
-  if len(data.genres[0]) > 1:
-      for genre in data.genres:
+  if len(artist.genres[0]) > 1:
+      for genre in artist.genres:
           genres.append(genre)
   else:
-      genres = [data.genres]
+      genres = [artist.genres]
 
   return render_template('pages/show_artist.html', artist=data)
 

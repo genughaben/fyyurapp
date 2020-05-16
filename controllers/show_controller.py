@@ -1,5 +1,5 @@
 from flask import render_template, request, Response, flash, redirect, url_for, abort, jsonify
-from models import db, Venue, Artist, Show
+from models import db, Venue, Artist, Show, format_datetime
 from sqlalchemy.inspection import inspect
 from forms import ShowForm
 from flask import Blueprint
@@ -18,7 +18,7 @@ def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  shows = Show.query.order_by(Show.date.asc()).all()
+  shows = Show.query.order_by(Show.start_time.asc()).all()
 
   show_list = []
   show_entry = {}
@@ -28,7 +28,7 @@ def shows():
       show_entry['artist_id'] = show.artist_id
       show_entry['artist_name'] = show.artist.name
       show_entry['artist_image_link'] = show.artist.image_link
-      show_entry['start_time'] = show.date.strftime("%Y-%m-%dT%H:%M:%S")
+      show_entry['start_time'] = show.start_time.strftime("%Y-%m-%dT%H:%M:%S")
       show_list.append(show_entry)
 
   data = show_list

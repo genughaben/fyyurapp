@@ -11,7 +11,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
-from models import app, Artist, Venue, Show
+from models import app, Artist, Venue, Show, format_datetime
 from controllers.venue_controller import venue_api
 from controllers.artist_controller import artist_api
 from controllers.show_controller import show_api
@@ -49,20 +49,7 @@ if not app.debug:
     app.logger.info('errors')
 
 
-#----------------------------------------------------------------------------#
-# Filters.
-#----------------------------------------------------------------------------#
-
-def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
-  if format == 'full':
-      format="EEEE MMMM, d, y 'at' h:mma"
-  elif format == 'medium':
-      format="EE MM, dd, y h:mma"
-  return babel.dates.format_datetime(date, format)
-
 app.jinja_env.filters['datetime'] = format_datetime
-
 
 #----------------------------------------------------------------------------#
 # Launch.

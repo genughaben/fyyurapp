@@ -1,10 +1,12 @@
+import dateutil.parser
+import babel
 from flask import Flask
 from flask_moment import Moment
 from flask_basicauth import BasicAuth
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from datetime import datetime, date
+from datetime import datetime
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -27,6 +29,18 @@ migrate = Migrate(app, db)
 #     db.init_app(app)
 #     migrate = Migrate(app, db)
 #     return db
+
+#----------------------------------------------------------------------------#
+# Filters.
+#----------------------------------------------------------------------------#
+
+def format_datetime(value, format='medium'):
+  date = dateutil.parser.parse(value)
+  if format == 'full':
+      format="EEEE MMMM, d, y 'at' h:mma"
+  elif format == 'medium':
+      format="EE MM, dd, y h:mma"
+  return babel.dates.format_datetime(date, format)
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -66,11 +80,6 @@ class Venue(db.Model):
       return _str
 
 
-    def get_num_upcoming_shows(self):
-        t = Venue.query.filter_by(id=Venue.id).filter(Show.date < date.today()).count()
-        # print(f"shows count: {t}")
-        return t
-
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -88,17 +97,33 @@ class Artist(db.Model):
     seek_performance_text = db.Column(db.Text, nullable=False, default='')
     shows = db.relationship('Show', backref='artist', lazy=True)
 
-    def get_num_upcoming_shows(self):
-        t = Artist.query.filter_by(id=Artist.id).filter(Show.date < date.today()).count()
-        # print(f"shows count: {t}")
-        return t
-
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 class Show(db.Model):
     __tablename__ = 'Show'
 
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    start_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
+
+    @staticmethod
+    def get_artists_upcoming_shows(artist_id):
+        r = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time > datetime.now()).all()
+        return r
+
+    @staticmethod
+    def get_artists_past_shows(artist_id):
+        r = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time < datetime.now()).all()
+        return r
+
+    @staticmethod
+    def get_venues_upcoming_shows(venue_id):
+        r = Show.query.filter_by(venue_id=venue_id).filter(Show.start_time > datetime.now()).all()
+        return r
+
+    @staticmethod
+    def get_venues_past_shows(venue_id):
+        r = Show.query.filter_by(venue_id=venue_id).filter(Show.start_time < datetime.now()).all()
+        print(r)
+        return r
