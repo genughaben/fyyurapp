@@ -7,6 +7,8 @@ from flask import Blueprint
 import pandas as pd
 import sys
 
+from controllers.util import url_valid_or_error
+
 venue_api = Blueprint('venue_api', __name__)
 
 #  Venues
@@ -23,30 +25,6 @@ def query_to_dict(rset):
 
 @venue_api.route('/')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-    data=[{
-        "city": "San Francisco",
-        "state": "CA",
-        "venues": [{
-        "id": 1,
-        "name": "The Musical Hop",
-        "num_upcoming_shows": 0,
-        }, {
-        "id": 3,
-        "name": "Park Square Live Music & Coffee",
-        "num_upcoming_shows": 1,
-        }]
-    }, {
-        "city": "New York",
-        "state": "NY",
-        "venues": [{
-        "id": 2,
-        "name": "The Dueling Pianos Bar",
-        "num_upcoming_shows": 0,
-        }]
-    }]
-
     venues_list = Venue.query.order_by(Venue.city.asc()).order_by(Venue.state.asc()).all()
 
     data = []
@@ -74,19 +52,40 @@ def venues():
 
     return render_template('pages/venues.html', areas=data)
 
+from pprint import pprint
+
 @venue_api.route('/search', methods=['POST'])
 def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }
+
+  error = False
+  try:
+      form_data = request.form
+      pprint(from_data)
+      search_term = form_data['search_term']
+
+      venues_suggestions = Venue.query.filter(func.lower(Venue.name) == func.lower(f"{search_term}"))
+
+      response = {
+        "count": len(venues_suggestion),
+        "data" : []
+      }
+
+      venue_dict = {}
+      for venue in venues_suggestions:
+          venue_dict["id"] = venue.id
+          venue_dict["name"] = venue.name
+          venue_dict["num_upcoming_shows"] = venue.get_num_upcoming_shows
+          response["data"].append(venue_dict)
+
+  except e:
+      print(f"An error {e} occured.")
+  finally:
+      db.session.close()
+
+  pprint(response)
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @venue_api.route('/<int:venue_id>')
@@ -178,12 +177,35 @@ def show_venue(venue_id):
 
 #  Create Venue
 #  ----------------------------------------------------------------
+#
 
+# Show GETted Create Form
 @venue_api.route('/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
   return render_template('forms/new_venue.html', form=form)
 
+
+# def check_duplicate_addresses(address_to_check):
+#     Venue.query.filter_by(address=address_to_check)
+#
+#
+#     pass
+#
+# def check_sense(value):
+#     if()
+#     pass
+#
+# def check_url(maybe_url):
+
+def error_handling():
+    error = True
+    db.session.rollback()
+    flash('Invalid url ' + form_data['name'] + ' could not be listed.', 'error')
+    print(sys.exc_info())
+    return error
+
+# Process users data POSTed via Create From
 @venue_api.route('/create', methods=['POST'])
 def create_venue_submission():
 
@@ -193,11 +215,11 @@ def create_venue_submission():
         name = form_data['name']
         city = form_data['city']
         state = form_data['state']
-        address =form_data['address']
+        address = form_data['address']
         phone = form_data['phone']
         genres = form_data.getlist('genres')
-        website = form_data['website_link']
-        facebook_link = form_data['facebook_link']
+        website = url_valid_or_error(form_data['website_link'])
+        facebook_link = url_valid_or_error(form_data['facebook_link'])
         new_venue = Venue(
           name = name,
           city = city,
@@ -210,10 +232,8 @@ def create_venue_submission():
         )
         db.session.add(new_venue)
         db.session.commit()
-    except:
-        error = True
-        db.session.rollback()
-        print(sys.exc_info())
+    except InvalidUrlException:
+        error = error_handling()
     finally:
         db.session.close()
 
@@ -235,6 +255,14 @@ def create_venue_submission():
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
 
 ### return render_template('pages/home.html')
+
+
+@venue_api.route('/venues/<int:venue_id>/edit', methods=['POST'])
+def edit_venue_submission(venue_id):
+  # TODO: take values from the form submitted, and update existing
+  # venue record with ID <venue_id> using the new attributes
+  return redirect(url_for('show_venue', venue_id=venue_id))
+
 
 @venue_api.route('/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
