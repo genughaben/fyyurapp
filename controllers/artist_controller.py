@@ -67,29 +67,8 @@ def show_artist(artist_id):
 
   artist = Artist.query.filter_by(id=artist_id).first()
 
-  upcoming_shows = Show.get_artists_upcoming_shows(artist_id=artist.id)
-  past_shows = Show.get_artists_past_shows(artist_id=artist.id)
-
-  print(f"upcoming_shows: {upcoming_shows}")
-  print(f"past_shows: {past_shows}")
-
-  upcoming_show_list = []
-  for upcoming_show in upcoming_shows:
-      upcoming_show_dict = {}
-      upcoming_show_dict['venue_image_link'] = upcoming_show.venue.image_link
-      upcoming_show_dict['venue_id'] = upcoming_show.venue.id
-      upcoming_show_dict['venue_name'] = upcoming_show.venue.name
-      upcoming_show_dict['start_time'] = upcoming_show.start_time.strftime('%Y-%m-%d %H:%M:%S')
-      upcoming_show_list.append(upcoming_show_dict)
-
-  past_show_list = []
-  for past_show in past_shows:
-      past_show_dict = {}
-      past_show_dict['venue_image_link'] = past_show.venue.image_link
-      past_show_dict['venue_id'] = past_show.venue.id
-      past_show_dict['venue_name'] = past_show.venue.name
-      past_show_dict['start_time'] = past_show.start_time.strftime('%Y-%m-%d %H:%M:%S')
-      past_show_list.append(past_show_dict)
+  upcoming_show_list = Show.get_artists_upcoming_shows(artist_id=artist.id)
+  past_show_list = Show.get_artists_past_shows(artist_id=artist.id)
 
   data = {
     "id": artist.id,
@@ -103,7 +82,7 @@ def show_artist(artist_id):
     "website": artist.website,
     "past_shows": past_show_list,
     "upcoming_shows": upcoming_show_list,
-    "past_shows_count": len(past_shows),
+    "past_shows_count": len(past_show_list),
     "upcoming_shows_count": len(upcoming_show_list)
    }
 

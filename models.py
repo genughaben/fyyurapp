@@ -108,22 +108,33 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
 
     @staticmethod
+    def extract_show_info(show_result):
+        show_list = []
+        for show in show_result:
+          show_dict = {}
+          show_dict['venue_image_link'] = show.venue.image_link
+          show_dict['venue_id'] = show.venue.id
+          show_dict['venue_name'] = show.venue.name
+          show_dict['start_time'] = show.start_time.strftime('%Y-%m-%d %H:%M:%S')
+          show_list.append(show_dict)
+        return show_list
+
+    @staticmethod
     def get_artists_upcoming_shows(artist_id):
-        r = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time > datetime.now()).all()
-        return r
+        show_result = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time > datetime.now()).all()
+        return Show.extract_show_info(show_result)
 
     @staticmethod
     def get_artists_past_shows(artist_id):
-        r = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time < datetime.now()).all()
-        return r
+        show_result = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time < datetime.now()).all()
+        return Show.extract_show_info(show_result)
 
     @staticmethod
     def get_venues_upcoming_shows(venue_id):
-        r = Show.query.filter_by(venue_id=venue_id).filter(Show.start_time > datetime.now()).all()
-        return r
+        show_result = Show.query.filter_by(venue_id=venue_id).filter(Show.start_time > datetime.now()).all()
+        return Show.extract_show_info(show_result)
 
     @staticmethod
     def get_venues_past_shows(venue_id):
-        r = Show.query.filter_by(venue_id=venue_id).filter(Show.start_time < datetime.now()).all()
-        print(r)
-        return r
+        show_result = Show.query.filter_by(venue_id=venue_id).filter(Show.start_time < datetime.now()).all()
+        return Show.extract_show_info(show_result)
