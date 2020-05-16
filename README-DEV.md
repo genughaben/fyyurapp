@@ -1,22 +1,29 @@
+# CURRENT ISSUE:
+
+* Implement validation checks for inserting data
+  duplicate row checks: https://stackoverflow.com/questions/44511046/sqlalchemy-prevent-duplicate-rows
+* Implement custom Exceptions for validation checks
+  Classes: https://towardsdatascience.com/how-to-define-custom-exception-classes-in-python-bfa346629bca
+  Classes: https://www.programiz.com/python-programming/user-defined-exception
+  Handling: https://stackoverflow.com/questions/4329453/handle-specific-exception-type-in-python
+* Implement controller using Blueprints for Artists and Shows
+
+# BasicAuth
+
+Used: https://flask-basicauth.readthedocs.io/en/latest/
+Also interesting (maybe better): https://flask-httpauth.readthedocs.io/en/latest/
 
 ## Migrations in live system:
 
 https://medium.com/walkin/database-migration-writing-scripts-best-practices-3634c2134782
 
-## Troubleshooting:
+
+# Deployment:
+
+https://gitlab.com/help/ci/environments
 
 
-### Problem
-The 'ERROR [root] Error: Target database is not up to date.' occurs.
-
-### Solution:
-
-Read and apply from here:
-https://stackoverflow.com/questions/17768940/target-database-is-not-up-to-date
-
-
-
-Mirrow repo between github and gitlab
+Mirror repo between github and gitlab
 
 https://docs.gitlab.com/ee/ci/ci_cd_for_external_repos/github_integration.html
 
@@ -87,3 +94,15 @@ https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx/
 
 Video to deploy via gitlab/gitlab-runner
 https://www.youtube.com/watch?v=RV0845KmsNI&t=191s
+
+
+# Troubleshooting:
+
+### Problem
+
+The 'ERROR [root] Error: Target database is not up to date.' occurs.
+
+### Solution:
+
+Read and apply from here:
+https://stackoverflow.com/questions/17768940/target-database-is-not-up-to-date
