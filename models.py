@@ -108,7 +108,6 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
 
 
-
     @staticmethod
     def extract_show_venue_info(show_result):
         show_list = []

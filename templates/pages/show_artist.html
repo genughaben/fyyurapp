@@ -72,4 +72,18 @@
 	</div>
 </section>
 
+<div class="row">
+  <div class="col-sm-3">
+    <a href="{{ url_for('artist_api.edit_artist', artist_id=artist.id) }}"
+       class="btn btn-primary btn-lg btn-block">Edit Artist</a>
+  </div>
+
+	<div>
+		<form method="POST" action="./{{artist.id}}">
+	  	<input type="hidden" value="{{artist.id}}" name="title">
+	  	<input style="width:250px;" class="btn btn-primary btn-lg btn-block btn-danger" type="submit" value="Delete Artist">
+		</form>
+	</div>
+</div>
+
 {% endblock %}

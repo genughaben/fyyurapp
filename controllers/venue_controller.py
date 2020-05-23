@@ -72,17 +72,19 @@ def search_venues():
         "data" : []
       }
 
-      venue_dict = {}
       for venue in venues_suggestions:
+          venue_dict = {}
           venue_dict["id"] = venue.id
           venue_dict["name"] = venue.name
-          venue_dict["num_upcoming_shows"] = venue.get_num_upcoming_shows()
+          venue_dict["num_upcoming_shows"] = len( [ s.start_time > datetime.now() for s in venue.shows ])
           response["data"].append(venue_dict)
 
+      print(response.data)
+
     except Exception as e:
-      print(f"An error {e} occured.")
+        print(f"An error {e} occured.")
     finally:
-      db.session.close()
+        db.session.close()
 
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -189,13 +191,32 @@ def create_venue_submission():
     flash('Venue ' + form_data['name'] + ' was successfully listed!', 'success')
     return render_template('pages/home.html')
 
+# @artist_api.route('/venues/<int:venue_id>/edit', methods=['GET'])
+# def edit_venue(venue_id):
+#   form = VenueForm()
+#   venue={
+#     "id": 1,
+#     "name": "The Musical Hop",
+#     "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
+#     "address": "1015 Folsom Street",
+#     "city": "San Francisco",
+#     "state": "CA",
+#     "phone": "123-123-1234",
+#     "website": "https://www.themusicalhop.com",
+#     "facebook_link": "https://www.facebook.com/TheMusicalHop",
+#     "seeking_talent": True,
+#     "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
+#     "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
+#   }
+#   # TODO: populate form with values from venue with ID <venue_id>
+#   return render_template('forms/edit_venue.html', form=form, venue=venue)
+
 
 @venue_api.route('/<int:venue_id>/edit', methods=['POST', 'GET'])
 def edit_venue_submission(venue_id):
     if request.method == 'GET':
         venue = Venue.query.filter_by(id=venue_id).first()
         form = VenueForm()
-        venue = Venue.query.get(venue_id)
         form.name.data = venue.name
         form.genres.data = venue.genres
         form.address.data = venue.address

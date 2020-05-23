@@ -233,9 +233,13 @@ class ArtistForm(Form):
         'facebook_link', validators=[URL()]
     )
 
+    seek_performance = BooleanField(
+        'seek_performance'
+    )
+
     seek_performance_text = TextAreaField(
         # TODO implement enum restriction
-        'seeking_performance',
+        'seek_performance_text',
     )
 
 # TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
