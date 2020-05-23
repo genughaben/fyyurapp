@@ -121,27 +121,18 @@ def show_venue(venue_id):
 
 # Show GETted Create Form
 @venue_api.route('/create', methods=['GET'])
-def create_venue_form():
-  form = VenueForm()
-  return render_template('forms/new_venue.html', form=form)
+def create_venue_form(form_data=None):
 
+    form = VenueForm()
+    if form_data:
+        return render_template('forms/new_venue.html', form=form, venue=form_data)
+    else:
+        return render_template('forms/new_venue.html', form=form)
 
-# def check_duplicate_addresses(address_to_check):
-#     Venue.query.filter_by(address=address_to_check)
-#
-#
-#     pass
-#
-# def check_sense(value):
-#     if()
-#     pass
-#
-# def check_url(maybe_url):
-
-def error_handling():
+def error_handling(e):
     error = True
     db.session.rollback()
-    flash('Invalid url ' + form_data['name'] + ' could not be listed.', 'error')
+    flash(f'Error: {e}', 'error')
     print(sys.exc_info())
     return error
 
@@ -150,17 +141,19 @@ def error_handling():
 def create_venue_submission():
 
     error = False
+    invalid = False
+    exists = False
     try:
-        form_data = request.form
+        form_data = request.formseeking_description
         name = form_data['name']
         city = form_data['city']
         state = form_data['state']
         address = form_data['address']
         phone = form_data['phone']
-        image_link = url_valid_or_error(form_data['image_link'])
+        image_link = url_valid_or_error('image_link', form_data)
         genres = form_data.getlist('genres')
-        website = url_valid_or_error(form_data['website'])
-        facebook_link = url_valid_or_error(form_data['facebook_link'])
+        website = url_valid_or_error('website', form_data)
+        facebook_link = url_valid_or_error('facebook_link', form_data)
         seeking_description = form_data['seeking_description']
         new_venue = Venue(
           name = name,
@@ -175,32 +168,95 @@ def create_venue_submission():
           seeking_talent = True if seeking_description != '' else False,
           seeking_description = seeking_description
         )
-        db.session.add(new_venue)
-        db.session.commit()
-    except InvalidUrlException:
-        error = error_handling()
+        exists = db.session.query(Venue.id).filter_by(name=name).scalar() is not None
+        if not exists:
+            db.session.add(new_venue)
+            db.session.commit()
+    except InvalidUrlException as e:
+        invalid = error_handling(e)
     finally:
         db.session.close()
 
     if error:
         flash('An error occurred. Venue ' + form_data['name'] + ' could not be listed.', 'error')
         abort(400)
+    if exists:
+        flash('Not added, there is already a Venue with name ' + form_data['name'] + ' present in the database.', 'success')
+        return render_template(url_for('venue_api.create_venue_form', form_data=form_data))
+    if invalid:
+        flash('Not added, there is already a Venue with name ' + form_data['name'] + ' present in the database.', 'success')
+        return render_template(url_for('venue_api.create_venue_form', form_data=form_data))
     flash('Venue ' + form_data['name'] + ' was successfully listed!', 'success')
     return render_template('pages/home.html')
 
 
-@venue_api.route('/venues/<int:venue_id>/edit', methods=['POST'])
+@venue_api.route('/<int:venue_id>/edit', methods=['POST', 'GET'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
+    if request.method == 'GET':
+        venue = Venue.query.filter_by(id=venue_id).first()
+        form = VenueForm()
+        venue = Venue.query.get(venue_id)
+        form.name.data = venue.name
+        form.genres.data = venue.genres
+        form.address.data = venue.address
+        form.city.data = venue.city
+        form.state.data = venue.state
+        form.phone.data = venue.phone
+        form.website.data = venue.website
+        form.facebook_link.data = venue.facebook_link
+        form.seeking_talent.data = True if venue.seeking_description else False
+        form.seeking_description.data = venue.seeking_description
+        form.image_link.data = venue.image_link
+        return render_template('forms/edit_venue.html', form=form, venue=venue)
+    if request.method == 'POST':
+        venue = Venue.query.filter_by(id=venue_id).first()
+        error = False
+        try:
+            data = request.form
+            venue.name = data['name']
+            venue.city = data['city']
+            venue.state = data['state']
+            venue.address = data['address']
+            venue.phone = data['phone']
+            venue.genres = data.getlist('genres')
+            venue.image_link = data['image_link']
+            venue.facebook_link = data['facebook_link']
+            venue.website = data['website']
+            venue.seeking_talent = True if data['seeking_description'] != '' else False
+            venue.seeking_description = data['seeking_description']
+
+            db.session.commit()
+
+        except:
+            error = True
+            db.session.rollback()
+            print(sys.exc_info())
+        finally:
+            db.session.close()
+        if error:
+            flash(f'An error occurred. Venue could not be changed.')
+        if not error:
+            flash(f'Venue was successfully updated!')
+        return redirect(url_for('venue_api.show_venue', venue_id=venue_id))
+    else:
+        return render_template('errors/404.html')
 
 
-@venue_api.route('/<venue_id>', methods=['DELETE'])
+@venue_api.route('/<venue_id>', methods=['POST'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
-  # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+    error = False
+    try:
+        venue = Venue.query.filter_by(id=venue_id).first()
+        db.session.delete(venue)
+        db.session.commit()
+    except:
+        error = True
+        db.session.rollback()
+    finally:
+        db.session.close()
+    if error:
+        flash(f'Error: venue with id: {venue_id} could not be deleted.')
+    if not error:
+        flash(f'Success: venue with id: {venue_id} was deleted.')
 
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+    return render_template('pages/home.html')

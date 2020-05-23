@@ -19,13 +19,14 @@ class InvalidUrlException(Exception):
 
     def __str__(self):
         if self.message:
-            return 'InvalidUrlException, {0} '.format(self.message)
+            return self.message
         else:
             return 'InvalidUrlException has been raised'
 
 
-def url_valid_or_error(url):
+def url_valid_or_error(field, data):
+    url = data[field]
     if url == '' or re.match(url_regex, url):
         return url
     else:
-        raise InvalidUrlException('invalid url provided')
+        raise InvalidUrlException(f'{url} invalid for {field}')
