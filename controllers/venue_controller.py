@@ -144,7 +144,7 @@ def create_venue_submission():
     invalid = False
     exists = False
     try:
-        form_data = request.formseeking_description
+        form_data = request.form
         name = form_data['name']
         city = form_data['city']
         state = form_data['state']
