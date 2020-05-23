@@ -11,6 +11,8 @@ url_regex = re.compile(
 
 
 class InvalidUrlException(Exception):
+    """Custom error for invalid url
+    """
     def __init__(self, *args):
         if args:
             self.message = args[0]
@@ -25,6 +27,7 @@ class InvalidUrlException(Exception):
 
 
 def url_valid_or_error(field, data):
+    """Checks whether url in data[field] is valid or empty. """
     url = data[field]
     if url == '' or re.match(url_regex, url):
         return url

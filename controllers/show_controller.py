@@ -15,9 +15,6 @@ show_api = Blueprint('show_api', __name__)
 
 @show_api.route('/')
 def shows():
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
   shows = Show.query.order_by(Show.start_time.asc()).all()
 
   show_list = []

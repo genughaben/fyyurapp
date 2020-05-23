@@ -26,6 +26,7 @@ from flask_basicauth import BasicAuth
 def index():
   return render_template('pages/home.html')
 
+# usage of blueprints for code separation
 app.register_blueprint(venue_api, url_prefix='/venues')
 app.register_blueprint(artist_api, url_prefix='/artists')
 app.register_blueprint(show_api, url_prefix='/shows')

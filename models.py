@@ -80,7 +80,6 @@ class Venue(db.Model):
       return _str
 
 
-
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -97,7 +96,6 @@ class Artist(db.Model):
     seek_performance_text = db.Column(db.Text, nullable=False, default='')
     shows = db.relationship('Show', backref='artist', lazy=True)
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 class Show(db.Model):
     __tablename__ = 'Show'
@@ -128,7 +126,6 @@ class Show(db.Model):
     def get_artists_past_shows(artist_id):
         show_result = Show.query.filter_by(artist_id=artist_id).filter(Show.start_time < datetime.now()).all()
         return Show.extract_show_venue_info(show_result)
-
 
     @staticmethod
     def extract_show_artist_info(show_result):

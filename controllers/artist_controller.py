@@ -64,7 +64,6 @@ def search_artists():
 @artist_api.route('/<int:artist_id>')
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
-
   artist = Artist.query.filter_by(id=artist_id).first()
 
   upcoming_show_list = Show.get_artists_upcoming_shows(artist_id=artist.id)
@@ -94,7 +93,6 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @artist_api.route('/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-    # TODO: populate form with fields from artist with ID <artist_id>
     artist = Artist.query.filter_by(id=artist_id).first()
     form = ArtistForm()
     form.name.data = artist.name
