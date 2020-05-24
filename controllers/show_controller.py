@@ -18,8 +18,8 @@ def shows():
   shows = Show.query.order_by(Show.start_time.asc()).all()
 
   show_list = []
-  show_entry = {}
   for show in shows:
+      show_entry = {}
       show_entry['venue_id'] = show.venue_id
       show_entry['venue_name'] = show.venue.name
       show_entry['artist_id'] = show.artist_id
