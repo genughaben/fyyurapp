@@ -1,15 +1,15 @@
 version: '3'
 
 services:
-   fyyurdb:
+  fyyurdb:
     container_name: fyyurdb
     image: postgres:10.10-alpine
     restart: always
     ports:
       - "5432:5432"
     environment:
-        POSTGRES_DB: 'fyyur'
-        POSTGRES_USER: 'postgres'
-        POSTGRES_PASSWORD: 'docker'
+      POSTGRES_DB: 'fyyur'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'docker'
     volumes:
-       - ./db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data

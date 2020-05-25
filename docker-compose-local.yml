@@ -1,39 +1,39 @@
 version: '3'
 
 services:
-   nginx:
+  nginx:
     build:
-     context: nginx
-     dockerfile: Dockerfile
+      context: nginx
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "80:80"
     command: nginx -g "daemon off";
     depends_on:
-     - fyyurapp
+      - fyyurapp
 
-   fyyurdb:
+  fyyurdb:
     container_name: fyyurdb
     image: postgres:10.10-alpine
     restart: always
     ports:
       - "5432:5432"
     environment:
-        POSTGRES_DB: 'fyyur'
-        POSTGRES_USER: 'postgres'
-        POSTGRES_PASSWORD: 'docker'
+      POSTGRES_DB: 'fyyur'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'docker'
     volumes:
-       - ./db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
 
-   fyyurapp:
-     container_name: fyyurapp
-     restart: always
-     depends_on:
-       - fyyurdb
-     build:
+  fyyurapp:
+    container_name: fyyurapp
+    restart: always
+    depends_on:
+      - fyyurdb
+    build:
       context: .
       dockerfile: Dockerfile
-     ports:
-       - "7001:7001"
-     environment:
-        DOCKER: 'True'
+    ports:
+      - "7001:7001"
+    environment:
+      DOCKER: 'True'
