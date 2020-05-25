@@ -1,21 +1,20 @@
-
-from flask import render_template, request, Response, flash, redirect, url_for, abort, jsonify
-from models import db, Venue, Artist, Show, format_datetime
-from datetime import datetime
-from sqlalchemy.inspection import inspect
-from forms import VenueForm
-from flask import Blueprint
-import pandas as pd
 import sys
+from datetime import datetime
 
-from pprint import pprint
+from flask import Blueprint
+from flask import render_template, request, flash, redirect, url_for, abort
+from sqlalchemy.inspection import inspect
+
 from controllers.util import InvalidUrlException, url_valid_or_error
+from forms import VenueForm
+from models import db, Venue, Show
 
 venue_api = Blueprint('venue_api', __name__)
 
 #  Venues
 #  ----------------------------------------------------------------
 from collections import defaultdict
+
 
 def query_to_dict(rset):
     result = defaultdict(list)
@@ -25,34 +24,39 @@ def query_to_dict(rset):
             result[key].append(x.value)
     return result
 
+
 @venue_api.route('/')
 def venues():
     venues_list = Venue.query.order_by(Venue.city.asc()).order_by(Venue.state.asc()).all()
 
-    data = []
-    entry = {
-      'city': venues_list[0].city,
-      'state': venues_list[0].state,
-      'venues': []
-    }
-    for venue in venues_list:
-      venue_entry = {
-        'id': venue.id,
-        'name': venue.name,
-        'num_upcoming_shows': len(Show.get_venues_upcoming_shows(venue_id=venue.id))
-      }
-      if venue.city == entry['city'] and venue.state == entry['state']:
-        entry['venues'].append(venue_entry)
-      else:
-        data.append(entry)
+    if len(venues_list) > 0:
+        data = []
         entry = {
-          'city': venue.city,
-          'state': venue.state,
-          'venues': [venue]
+            'city': venues_list[0].city,
+            'state': venues_list[0].state,
+            'venues': []
         }
-    data.append(entry)
+        for venue in venues_list:
+            venue_entry = {
+                'id': venue.id,
+                'name': venue.name,
+                'num_upcoming_shows': len(Show.get_venues_upcoming_shows(venue_id=venue.id))
+            }
+            if venue.city == entry['city'] and venue.state == entry['state']:
+                entry['venues'].append(venue_entry)
+            else:
+                data.append(entry)
+                entry = {
+                    'city': venue.city,
+                    'state': venue.state,
+                    'venues': [venue]
+                }
+        data.append(entry)
+    else:
+        data = []
 
     return render_template('pages/venues.html', areas=data)
+
 
 @venue_api.route('/search', methods=['POST'])
 def search_venues():
@@ -62,61 +66,66 @@ def search_venues():
     response = {}
     error = False
     try:
-      form_data = request.form
-      search_term = form_data['search_term'].lower()
-      search_term = f"%{search_term}%"
+        form_data = request.form
+        search_term = form_data['search_term'].lower()
+        search_term = f"%{search_term}%"
 
-      venues_suggestions = Venue.query.filter(Venue.name.ilike(search_term)).all()
+        venues_suggestions = Venue.query.filter(Venue.name.ilike(search_term)).all()
 
-      response = {
-        "count": len(venues_suggestions),
-        "data" : []
-      }
+        response = {
+            "count": len(venues_suggestions),
+            "data": []
+        }
 
-      for venue in venues_suggestions:
-          venue_dict = {}
-          venue_dict["id"] = venue.id
-          venue_dict["name"] = venue.name
-          venue_dict["num_upcoming_shows"] = len( [ s.start_time > datetime.now() for s in venue.shows ])
-          response["data"].append(venue_dict)
+        for venue in venues_suggestions:
+            venue_dict = {}
+            venue_dict["id"] = venue.id
+            venue_dict["name"] = venue.name
+            venue_dict["num_upcoming_shows"] = len([s.start_time > datetime.now() for s in venue.shows])
+            response["data"].append(venue_dict)
 
-      print(response.data)
+        print(response.data)
 
     except Exception as e:
         print(f"An error {e} occured.")
     finally:
         db.session.close()
 
-    return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+    return render_template('pages/search_venues.html', results=response,
+                           search_term=request.form.get('search_term', ''))
+
 
 @venue_api.route('/<int:venue_id>')
 def show_venue(venue_id):
     # shows the venue page with the given venue_id
     venue = Venue.query.filter_by(id=venue_id).first()
 
-    upcoming_show_list = Show.get_venues_upcoming_shows(venue_id=venue.id)
-    past_show_list = Show.get_venues_past_shows(venue_id=venue.id)
+    upcoming_show_result = db.session.query(Show).join(Venue).filter(Show.start_time > datetime.now()).all()
+    upcoming_show_list = Show.extract_show_artist_info(upcoming_show_result)
+    past_show_result = db.session.query(Show).join(Venue).filter(Show.start_time <= datetime.now()).all()
+    past_show_list = Show.extract_show_artist_info(past_show_result)
 
     data = {
-      "id": venue.id,
-      "name": venue.name,
-      "genres": venue.genres,
-      "address": venue.address,
-      "city": venue.city,
-      "state": venue.state,
-      "phone": venue.phone,
-      "website": venue.website,
-      "facebook_link": venue.facebook_link,
-      "seeking_talent": venue.seeking_talent,
-      "seeking_description": venue.seeking_description,
-      "image_link": venue.image_link,
-      "past_shows": past_show_list,
-      "upcoming_shows": upcoming_show_list,
-      "past_shows_count": len(past_show_list),
-      "upcoming_shows_count": len(upcoming_show_list)
+        "id": venue.id,
+        "name": venue.name,
+        "genres": venue.genres,
+        "address": venue.address,
+        "city": venue.city,
+        "state": venue.state,
+        "phone": venue.phone,
+        "website": venue.website,
+        "facebook_link": venue.facebook_link,
+        "seeking_talent": venue.seeking_talent,
+        "seeking_description": venue.seeking_description,
+        "image_link": venue.image_link,
+        "past_shows": past_show_list,
+        "upcoming_shows": upcoming_show_list,
+        "past_shows_count": len(past_show_list),
+        "upcoming_shows_count": len(upcoming_show_list)
     }
 
     return render_template('pages/show_venue.html', venue=data)
+
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -125,12 +134,12 @@ def show_venue(venue_id):
 # Show GETted Create Form
 @venue_api.route('/create', methods=['GET'])
 def create_venue_form(form_data=None):
-
     form = VenueForm()
     if form_data:
         return render_template('forms/new_venue.html', form=form, venue=form_data)
     else:
         return render_template('forms/new_venue.html', form=form)
+
 
 def error_handling(e):
     error = True
@@ -139,10 +148,10 @@ def error_handling(e):
     print(sys.exc_info())
     return error
 
+
 # Process users data POSTed via Create From
 @venue_api.route('/create', methods=['POST'])
 def create_venue_submission():
-
     error = False
     invalid = False
     exists = False
@@ -159,17 +168,17 @@ def create_venue_submission():
         facebook_link = url_valid_or_error('facebook_link', form_data)
         seeking_description = form_data['seeking_description']
         new_venue = Venue(
-          name = name,
-          city = city,
-          state = state,
-          address = address,
-          phone = phone,
-          genres = genres,
-          website = website,
-          facebook_link = facebook_link,
-          image_link = image_link,
-          seeking_talent = True if seeking_description != '' else False,
-          seeking_description = seeking_description
+            name=name,
+            city=city,
+            state=state,
+            address=address,
+            phone=phone,
+            genres=genres,
+            website=website,
+            facebook_link=facebook_link,
+            image_link=image_link,
+            seeking_talent=True if seeking_description != '' else False,
+            seeking_description=seeking_description
         )
         exists = db.session.query(Venue.id).filter_by(name=name).scalar() is not None
         if not exists:
@@ -184,13 +193,16 @@ def create_venue_submission():
         flash('An error occurred. Venue ' + form_data['name'] + ' could not be listed.', 'error')
         abort(400)
     if exists:
-        flash('Not added, there is already a Venue with name ' + form_data['name'] + ' present in the database.', 'success')
+        flash('Not added, there is already a Venue with name ' + form_data['name'] + ' present in the database.',
+              'success')
         return render_template(url_for('venue_api.create_venue_form', form_data=form_data))
     if invalid:
-        flash('Not added, there is already a Venue with name ' + form_data['name'] + ' present in the database.', 'success')
+        flash('Not added, there is already a Venue with name ' + form_data['name'] + ' present in the database.',
+              'success')
         return render_template(url_for('venue_api.create_venue_form', form_data=form_data))
     flash('Venue ' + form_data['name'] + ' was successfully listed!', 'success')
     return render_template('pages/home.html')
+
 
 @venue_api.route('/<int:venue_id>/edit', methods=['POST', 'GET'])
 def edit_venue_submission(venue_id):

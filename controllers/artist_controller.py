@@ -1,14 +1,12 @@
-
-from datetime import datetime
-from flask import render_template, request, Response, flash, redirect, url_for, abort, jsonify
-from models import db, Venue, Artist, Show, format_datetime
-from sqlalchemy.inspection import inspect
-from forms import ArtistForm
-from flask import Blueprint
-import pandas as pd
 import sys
+from datetime import datetime
+
+from flask import Blueprint
+from flask import render_template, request, flash, redirect, url_for, abort
 
 from controllers.util import url_valid_or_error
+from forms import ArtistForm
+from models import db, Artist, Show
 
 artist_api = Blueprint('artist_api', __name__)
 
@@ -17,21 +15,22 @@ artist_api = Blueprint('artist_api', __name__)
 #  ----------------------------------------------------------------
 @artist_api.route('/')
 def artists():
-  artist_list = Artist.query.order_by(Artist.name.asc()).all()
-  data = []
-  print(artist_list)
-  for artist in artist_list:
-      arist_dict = {}
-      arist_dict['id'] = artist.id
-      arist_dict['name'] = artist.name
-      data.append(arist_dict)
+    artist_list = Artist.query.order_by(Artist.name.asc()).all()
+    data = []
+    print(artist_list)
+    for artist in artist_list:
+        arist_dict = {}
+        arist_dict['id'] = artist.id
+        arist_dict['name'] = artist.name
+        data.append(arist_dict)
 
-  return render_template('pages/artists.html', artists=data)
+    return render_template('pages/artists.html', artists=data)
+
 
 @artist_api.route('/search', methods=['POST'])
 def search_artists():
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
+    # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
+    # search for "band" should return "The Wild Sax Band".
 
     response = {}
     error = False
@@ -43,15 +42,15 @@ def search_artists():
         artist_suggestions = Artist.query.filter(Artist.name.ilike(search_term)).all()
 
         response = {
-          "count": len(artist_suggestions),
-          "data" : []
+            "count": len(artist_suggestions),
+            "data": []
         }
 
         for artist in artist_suggestions:
             artist_dict = {}
             artist_dict["id"] = artist.id
             artist_dict["name"] = artist.name
-            artist_dict["num_upcoming_shows"] = len( [ s.start_time > datetime.now() for s in artist.shows ])
+            artist_dict["num_upcoming_shows"] = len([s.start_time > datetime.now() for s in artist.shows])
             response["data"].append(artist_dict)
 
     except Exception as e:
@@ -59,35 +58,43 @@ def search_artists():
     finally:
         db.session.close()
 
-    return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+    return render_template('pages/search_artists.html', results=response,
+                           search_term=request.form.get('search_term', ''))
+
 
 @artist_api.route('/<int:artist_id>')
 def show_artist(artist_id):
-  # shows the venue page with the given venue_id
-  artist = Artist.query.filter_by(id=artist_id).first()
+    # shows the venue page with the given venue_id
+    artist = Artist.query.filter_by(id=artist_id).first()
 
-  upcoming_show_list = Show.get_artists_upcoming_shows(artist_id=artist.id)
-  past_show_list = Show.get_artists_past_shows(artist_id=artist.id)
+    upcoming_show_list = Show.get_artists_upcoming_shows(artist_id=artist.id)
+    past_show_list = Show.get_artists_past_shows(artist_id=artist.id)
 
-  data = {
-    "id": artist.id,
-    "name": artist.name,
-    "genres": artist.genres,
-    "city": artist.city,
-    "state": artist.state,
-    "phone": artist.phone,
-    "facebook_link": artist.facebook_link,
-    "image_link": artist.image_link,
-    "website": artist.website,
-    "seek_performance": artist.seek_performance,
-    "seek_performance_text": artist.seek_performance_text,
-    "past_shows": past_show_list,
-    "upcoming_shows": upcoming_show_list,
-    "past_shows_count": len(past_show_list),
-    "upcoming_shows_count": len(upcoming_show_list)
-   }
+    upcoming_show_result = db.session.query(Show).join(Artist).filter(Show.start_time > datetime.now()).all()
+    upcoming_show_list = Show.extract_show_venue_info(upcoming_show_result)
+    past_show_result = db.session.query(Show).join(Artist).filter(Show.start_time <= datetime.now()).all()
+    past_show_list = Show.extract_show_venue_info(past_show_result)
 
-  return render_template('pages/show_artist.html', artist=data)
+    data = {
+        "id": artist.id,
+        "name": artist.name,
+        "genres": artist.genres,
+        "city": artist.city,
+        "state": artist.state,
+        "phone": artist.phone,
+        "facebook_link": artist.facebook_link,
+        "image_link": artist.image_link,
+        "website": artist.website,
+        "seek_performance": artist.seek_performance,
+        "seek_performance_text": artist.seek_performance_text,
+        "past_shows": past_show_list,
+        "upcoming_shows": upcoming_show_list,
+        "past_shows_count": len(past_show_list),
+        "upcoming_shows_count": len(upcoming_show_list)
+    }
+
+    return render_template('pages/show_artist.html', artist=data)
+
 
 #  Update
 #  ----------------------------------------------------------------
@@ -141,17 +148,18 @@ def edit_artist_submission(artist_id):
     else:
         return render_template('errors/404.html')
 
-  #  Create Artist
-  #  ----------------------------------------------------------------
+
+#  Create Artist
+#  ----------------------------------------------------------------
 
 @artist_api.route('/create', methods=['GET'])
 def create_artist_form():
     form = ArtistForm()
     return render_template('forms/new_artist.html', form=form)
 
+
 @artist_api.route('/create', methods=['POST'])
 def create_artist_submission():
-
     error = False
     try:
         form_data = request.form
@@ -166,16 +174,16 @@ def create_artist_submission():
         seek_performance_text = form_data['seek_performance_text']
 
         new_artist = Artist(
-            name = name,
-            city = city,
-            state = state,
-            phone = phone,
-            genres = genres,
-            website = website,
-            image_link = image_link,
-            facebook_link = facebook_link,
-            seek_performance = True if seek_performance_text != '' else False,
-            seek_performance_text = seek_performance_text,
+            name=name,
+            city=city,
+            state=state,
+            phone=phone,
+            genres=genres,
+            website=website,
+            image_link=image_link,
+            facebook_link=facebook_link,
+            seek_performance=True if seek_performance_text != '' else False,
+            seek_performance_text=seek_performance_text,
         )
         print(new_artist)
         db.session.add(new_artist)
